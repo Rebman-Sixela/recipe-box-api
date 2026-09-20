@@ -1,0 +1,3 @@
+- 2026-09-20: Anonymous **GET /recipes** → 200 OK, returns all recipes including `is_public: false` ones (e.g. "Secret family hot sauce").
+- 2026-09-20: Anonymous **PATCH /recipes/2** → 200 OK, updates the recipe title to "Overnight oats UPDATED" and change is visible in a follow-up **GET /recipes/2**.
+- 2026-09-20: Anonymous **DELETE /recipes/2** → 200 OK (or similar success status), recipe 2 is removed and no longer appears in a follow-up **GET /recipes**.
