@@ -36,3 +36,5 @@ curl -X DELETE http://127.0.0.1:5000/recipes/1
 
 `is_public` is stored on every recipe but nothing enforces it yet - by the end
 of Unit 3, private recipes will only be visible to their owners.
+
+Local note: cloned and tested on Sun Sep 20 14:08:10 CDT 2026.
