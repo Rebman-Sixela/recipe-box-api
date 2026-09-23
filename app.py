@@ -1,3 +1,8 @@
+import sqlite3
+
+from flask import Flask, g, jsonify, request
+from werkzeug.security import generate_password_hash, check_password_hash
+
 """Recipe Box API — BE104 course skeleton.
 
 A working Flask + SQLite CRUD API for recipes. It stores data perfectly —
@@ -5,9 +10,6 @@ and it trusts everyone. There is no authentication and no authorization yet.
 That is the point: you will add both, lesson by lesson, in Units 2 and 3.
 """
 
-import sqlite3
-
-from flask import Flask, g, jsonify, request
 
 DATABASE = "recipes.db"
 
@@ -126,6 +128,61 @@ def delete_recipe(recipe_id):
     if cur.rowcount == 0:
         return jsonify({"error": "recipe not found"}), 404
     return "", 204
+
+
+def user_to_dict(row):
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "email": row["email"],
+        # Notice: we do NOT return password_hash here
+    }
+
+@app.post("/register")
+def register():
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "request body must be JSON"}), 400
+
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    # Basic validation
+    if not isinstance(username, str) or not username.strip():
+        return jsonify({"error": "username is required"}), 400
+
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({"error": "email is required"}), 400
+
+    if not isinstance(password, str) or not password.strip():
+        return jsonify({"error": "password is required"}), 400
+
+    password_hash = generate_password_hash(password)
+
+    db = get_db()
+    try:
+        cur = db.execute(
+            """
+            INSERT INTO users (username, email, password_hash)
+            VALUES (?, ?, ?)
+            """,
+            (username.strip(), email.strip(), password_hash),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        # username or email already exists
+        return jsonify({"error": "username or email already in use"}), 409
+
+    row = db.execute(
+        "SELECT id, username, email FROM users WHERE id = ?",
+        (cur.lastrowid,),
+    ).fetchone()
+
+    return jsonify(user_to_dict(row)), 201
+
+
 
 
 if __name__ == "__main__":
