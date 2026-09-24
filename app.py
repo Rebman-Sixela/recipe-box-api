@@ -15,12 +15,15 @@ DATABASE = "recipes.db"
 
 app = Flask(__name__)
 
-
 @app.post("/login")
 def login():
     data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
+
+    # 🔒 Input validation: missing fields → 400
+    if not username or not password:
+        return jsonify({"error": "missing username or password"}), 400
 
     db = get_db()
     row = db.execute(
@@ -28,11 +31,11 @@ def login():
         (username,),
     ).fetchone()
 
-    # If user not found or password is wrong, return the SAME generic 401
+    # 🔐 Credentials check: bad credentials → 401
     if row is None or not check_password_hash(row["password_hash"], password):
         return jsonify({"error": "bad credentials"}), 401
 
-    # Success: return a safe identity, no password or hash
+    # ✅ Success: return a safe identity, no password or hash
     return jsonify({
         "id": row["id"],
         "username": row["username"],
