@@ -16,6 +16,29 @@ DATABASE = "recipes.db"
 app = Flask(__name__)
 
 
+@app.post("/login")
+def login():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username")
+    password = data.get("password")
+
+    db = get_db()
+    row = db.execute(
+        "SELECT id, username, password_hash FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+
+    # If user not found or password is wrong, return the SAME generic 401
+    if row is None or not check_password_hash(row["password_hash"], password):
+        return jsonify({"error": "bad credentials"}), 401
+
+    # Success: return a safe identity, no password or hash
+    return jsonify({
+        "id": row["id"],
+        "username": row["username"],
+    }), 200
+
+
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -186,4 +209,4 @@ def register():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
